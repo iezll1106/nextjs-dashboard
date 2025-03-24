@@ -5,61 +5,60 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { generatePagination } from '@/app/lib/utils';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function Pagination({ totalPages }: { totalPages: number }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const createPageURL = (pageNumber: number | string) => {
+  useEffect(() => {
+    setCurrentPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  const createPageURL = useCallback((pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', pageNumber.toString());
     return `${pathname}?${params.toString()}`;
-  };
+  }, [searchParams, pathname]);
   
-  // NOTE: Uncomment this code in Chapter 11
-
   const allPages = generatePagination(currentPage, totalPages);
 
   return (
-    <>
-      {/*  NOTE: Uncomment this code in Chapter 11 */}
+    <div className="inline-flex" aria-label="Pagination">
+      <PaginationArrow
+        direction="left"
+        href={createPageURL(currentPage - 1)}
+        isDisabled={currentPage <= 1}
+      />
 
-      <div className="inline-flex">
-        <PaginationArrow
-          direction="left"
-          href={createPageURL(currentPage - 1)}
-          isDisabled={currentPage <= 1}
-        />
+      <div className="flex -space-x-px">
+        {allPages.map((page, index) => {
+          let position: 'first' | 'last' | 'single' | 'middle' | undefined;
 
-        <div className="flex -space-x-px">
-          {allPages.map((page, index) => {
-            let position: 'first' | 'last' | 'single' | 'middle' | undefined;
+          if (index === 0) position = 'first';
+          if (index === allPages.length - 1) position = 'last';
+          if (allPages.length === 1) position = 'single';
+          if (page === '...') position = 'middle';
 
-            if (index === 0) position = 'first';
-            if (index === allPages.length - 1) position = 'last';
-            if (allPages.length === 1) position = 'single';
-            if (page === '...') position = 'middle';
-
-            return (
-              <PaginationNumber
-                key={page}
-                href={createPageURL(page)}
-                page={page}
-                position={position}
-                isActive={currentPage === page}
-              />
-            );
-          })}
-        </div>
-
-        <PaginationArrow
-          direction="right"
-          href={createPageURL(currentPage + 1)}
-          isDisabled={currentPage >= totalPages}
-        />
+          return (
+            <PaginationNumber
+              key={page}
+              href={createPageURL(page)}
+              page={page}
+              position={position}
+              isActive={currentPage === page}
+            />
+          );
+        })}
       </div>
-    </>
+
+      <PaginationArrow
+        direction="right"
+        href={createPageURL(currentPage + 1)}
+        isDisabled={currentPage >= totalPages}
+      />
+    </div>
   );
 }
 
@@ -86,9 +85,9 @@ function PaginationNumber({
   );
 
   return isActive || position === 'middle' ? (
-    <div className={className}>{page}</div>
+    <div className={className} aria-current={isActive ? "page" : undefined}>{page}</div>
   ) : (
-    <Link href={href} className={className}>
+    <Link href={href} className={className} aria-label={`Go to page ${page}`}>
       {page}
     </Link>
   );
@@ -121,9 +120,9 @@ function PaginationArrow({
     );
 
   return isDisabled ? (
-    <div className={className}>{icon}</div>
+    <div className={className} aria-disabled="true">{icon}</div>
   ) : (
-    <Link className={className} href={href}>
+    <Link className={className} href={href} aria-label={`Go to ${direction === 'left' ? 'previous' : 'next'} page`}>
       {icon}
     </Link>
   );
