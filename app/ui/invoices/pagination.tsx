@@ -5,17 +5,22 @@ import clsx from 'clsx';
 import Link from 'next/link';
 import { generatePagination } from '@/app/lib/utils';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 
 export default function Pagination({ totalPages }: { totalPages: number }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentPage = Number(searchParams.get('page')) || 1;
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const createPageURL = (pageNumber: number | string) => {
+  useEffect(() => {
+    setCurrentPage(Number(searchParams.get('page')) || 1);
+  }, [searchParams]);
+
+  const createPageURL = useCallback((pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);
     params.set('page', pageNumber.toString());
     return `${pathname}?${params.toString()}`;
-  };
+  }, [searchParams, pathname]);
   
   const allPages = generatePagination(currentPage, totalPages);
 
