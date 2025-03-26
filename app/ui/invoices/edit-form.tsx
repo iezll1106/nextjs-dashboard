@@ -20,8 +20,14 @@ export default function EditInvoiceForm({
   customers: CustomerField[];
 }) {
   const initialState: State = { message: null, errors: {} };
-  const updateInvoiceWithId = updateInvoice.bind(null, invoice.id);
-  const [state, formAction] = useActionState(updateInvoiceWithId, initialState);
+
+  // Wrapper function to ensure correct handling of server action
+  async function handleUpdate(prevState: State, formData: FormData) {
+    'use server';
+    return updateInvoice(invoice.id, prevState, formData);
+  }
+
+  const [state, formAction] = useActionState(handleUpdate, initialState);
 
   return (
     <form action={formAction}>
